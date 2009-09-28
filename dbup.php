@@ -139,7 +139,7 @@ function dbup($db, $versions, $from = null, $to = null)
 			{
 				if (!$stmt->execute())
 				{
-					throw new Exception("Can't execute statement: ".$stmt->error);
+					throw new Exception("Can't execute statement [$sql]: ".$stmt->error);
 				}
 
 				$stmt->close();
@@ -257,7 +257,7 @@ function dbdown($db, $versions, $from = null, $to = null)
 			{
 				if (!$stmt->execute())
 				{
-					throw new Exception("Can't execute statement: ".$stmt->error);
+					throw new Exception("Can't execute statement [$sql]: ".$stmt->error);
 				}
 
 				$stmt->close();
