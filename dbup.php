@@ -127,20 +127,27 @@ function dbup($db, $versions, $from = null, $to = null)
 			return false;
 		}
 
-		$sql = $versions[$ver]['up'];
-
-		if ($stmt = $db->prepare($sql))
+		$commands = $versions[$ver]['up'];
+		if (!is_array($commands))
 		{
-			if (!$stmt->execute())
-			{
-				throw new Exception("Can't execute statement: ".$stmt->error);
-			}
-
-			$stmt->close();
+			$commands = array($commands);
 		}
-		else
+
+		foreach ($commands as $sql)
 		{
-			throw new Exception("Can't prepare statement: ".$db->error);
+			if ($stmt = $db->prepare($sql))
+			{
+				if (!$stmt->execute())
+				{
+					throw new Exception("Can't execute statement: ".$stmt->error);
+				}
+
+				$stmt->close();
+			}
+			else
+			{
+				throw new Exception("Can't prepare statement: ".$db->error);
+			}
 		}
 
 		if ($stmt = $db->prepare('UPDATE db_version SET version = ? WHERE version = ?'))
@@ -238,20 +245,27 @@ function dbdown($db, $versions, $from = null, $to = null)
 			return false;
 		}
 
-		$sql = $versions[$ver]['down'];
-
-		if ($stmt = $db->prepare($sql))
+		$commands = $versions[$ver]['down'];
+		if (!is_array($commands))
 		{
-			if (!$stmt->execute())
-			{
-				throw new Exception("Can't execute statement: ".$stmt->error);
-			}
-
-			$stmt->close();
+			$commands = array($commands);
 		}
-		else
+
+		foreach ($commands as $sql)
 		{
-			throw new Exception("Can't prepare statement: ".$db->error);
+			if ($stmt = $db->prepare($sql))
+			{
+				if (!$stmt->execute())
+				{
+					throw new Exception("Can't execute statement: ".$stmt->error);
+				}
+
+				$stmt->close();
+			}
+			else
+			{
+				throw new Exception("Can't prepare statement: ".$db->error);
+			}
 		}
 
 		if ($stmt = $db->prepare('UPDATE db_version SET version = ? WHERE version = ?'))
