@@ -3,7 +3,7 @@
  * Database connection object
  * you need to set it up in config to MySQLi database
 */
-$db = null;
+#$db = new mysqli( 'localhost', 'user', 'pass', 'dbname');
 
 /*
  * Versions array holds upgrade and downgrade scripts for each version
@@ -14,7 +14,7 @@ $db = null;
  *
  * Add entries for each version of your DB schema in config file
  */
-$versions = array();
+#$versions = array();
 
 function init_db_version($db)
 {
@@ -102,7 +102,7 @@ function dbup($db, $versions, $from = null, $to = null)
 			// can't get db version from db
 			$from = 0;
 
-			init_db_version();
+			init_db_version($db);
 		}
 	}
 
@@ -208,7 +208,7 @@ function dbdown($db, $versions, $from = null, $to = null)
 			// can't get db version from db
 			$from = 0;
 
-			init_db_version();
+			init_db_version($db);
 		}
 
 		if ($from <= $to)
