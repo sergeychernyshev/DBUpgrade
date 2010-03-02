@@ -16,9 +16,10 @@
  */
 #$versions = array();
 
-function init_db_version($db)
+function get_db_version($db)
 {
-	if ($stmt = $db->prepare('DROP TABLE IF EXISTS db_version'))
+	// if table doesn't exist at all, let's use version 0 for the shema (DEFAULT 0)
+	if ($stmt = $db->prepare('CREATE TABLE IF NOT EXISTS db_version ( version INT(10) UNSIGNED DEFAULT 0 PRIMARY KEY)'))
 	{
 		if (!$stmt->execute())
 		{
@@ -32,11 +33,26 @@ function init_db_version($db)
 		throw new Exception("Can't prepare statement: ".$db->error);
 	}
 
-	if ($stmt = $db->prepare('CREATE TABLE db_version ( version INT(10) UNSIGNED DEFAULT 0 PRIMARY KEY)'))
+	// if table has no entries, insert one with default value
+	if ($db->query('INSERT IGNORE INTO db_version VALUES ()') === FALSE)
+	{
+		throw new Exception("Can't execute query: ".$db->error);
+	}
+
+	if ($stmt = $db->prepare('SELECT version FROM db_version LIMIT 1'))
 	{
 		if (!$stmt->execute())
 		{
 			throw new Exception("Can't execute statement: ".$stmt->error);
+		}
+		if (!$stmt->bind_result($db_version))
+		{
+			throw new Exception("Can't bind result: ".$stmt->error);
+		}
+
+		if ($stmt->fetch() === FALSE)
+		{
+			throw new Exception("Still don't have an entry in db_version");
 		}
 
 		$stmt->close();
@@ -46,8 +62,26 @@ function init_db_version($db)
 		throw new Exception("Can't prepare statement: ".$db->error);
 	}
 
-	if ($stmt = $db->prepare('INSERT INTO db_version (version) VALUES (0)'))
+	return $db_version;
+}
+
+function set_db_version($db, $version)
+{
+	if (filter_var($version, FILTER_VALIDATE_INT) === FALSE || $version < 0) {
+		throw new Exception('Versions must be positive integers');
+	}
+
+	if ($db->query('ALTER TABLE db_version MODIFY version INT(10) UNSIGNED DEFAULT '.$version) === FALSE)
 	{
+		throw new Exception("Can't execute query: ".$db->error);
+	}
+
+	if ($stmt = $db->prepare('UPDATE db_version SET version = ?'))
+	{
+		if (!$stmt->bind_param('i', $version))
+		{
+			throw new Exception("Can't bind parameter".$stmt->error);
+		}
 		if (!$stmt->execute())
 		{
 			throw new Exception("Can't execute statement: ".$stmt->error);
@@ -72,38 +106,7 @@ function dbup($db, $versions, $from = null, $to = null)
 	// if current version is not passed over, try to get it from the db's db_version table
 	if (is_null($from))
 	{
-		try
-		{
-			if ($stmt = $db->prepare('SELECT version FROM db_version LIMIT 1'))
-			{
-				if (!$stmt->execute())
-				{
-					throw new Exception("Can't execute statement: ".$stmt->error);
-				}
-				if (!$stmt->bind_result($db_version))
-				{
-					throw new Exception("Can't bind result: ".$stmt->error);
-				}
-
-				if ($stmt->fetch() === TRUE)
-				{
-					$from = $db_version;
-				}
-
-				$stmt->close();
-			}
-			else
-			{
-				throw new Exception("Can't prepare statement: ".$db->error);
-			}
-		}
-		catch (Exception $ex)
-		{
-			// can't get db version from db
-			$from = 0;
-
-			init_db_version($db);
-		}
+		$from = get_db_version($db);
 	}
 
 	if ($from >= $to)
@@ -150,23 +153,8 @@ function dbup($db, $versions, $from = null, $to = null)
 			}
 		}
 
-		if ($stmt = $db->prepare('UPDATE db_version SET version = ? WHERE version = ?'))
-		{
-			if (!$stmt->bind_param('ii', $ver, $prev))
-			{
-				throw new Exception("Can't bind parameter".$stmt->error);
-			}
-			if (!$stmt->execute())
-			{
-				throw new Exception("Can't execute statement: ".$stmt->error);
-			}
+		set_db_version($db, $ver);
 
-			$stmt->close();
-		}
-		else
-		{
-			throw new Exception("Can't prepare statement: ".$db->error);
-		}
 		echo "Upgraded to v.$ver\n";
 	}
 
@@ -178,38 +166,7 @@ function dbdown($db, $versions, $from = null, $to = null)
 	// if current version is not passed over, try to get it from the db's db_version table
 	if (is_null($from))
 	{
-		try
-		{
-			if ($stmt = $db->prepare('SELECT version FROM db_version LIMIT 1'))
-			{
-				if (!$stmt->execute())
-				{
-					throw new Exception("Can't execute statement: ".$stmt->error);
-				}
-				if (!$stmt->bind_result($db_version))
-				{
-					throw new Exception("Can't bind result: ".$stmt->error);
-				}
-
-				if ($stmt->fetch() === TRUE)
-				{
-					$from = $db_version;
-				}
-
-				$stmt->close();
-			}
-			else
-			{
-				throw new Exception("Can't prepare statement: ".$db->error);
-			}
-		}
-		catch (Exception $ex)
-		{
-			// can't get db version from db
-			$from = 0;
-
-			init_db_version($db);
-		}
+		$from = get_db_version($db);
 
 		if ($from <= $to)
 		{
@@ -268,23 +225,8 @@ function dbdown($db, $versions, $from = null, $to = null)
 			}
 		}
 
-		if ($stmt = $db->prepare('UPDATE db_version SET version = ? WHERE version = ?'))
-		{
-			if (!$stmt->bind_param('ii', $next, $ver))
-			{
-				throw new Exception("Can't bind parameter".$stmt->error);
-			}
-			if (!$stmt->execute())
-			{
-				throw new Exception("Can't execute statement: ".$stmt->error);
-			}
+		set_db_version($db, $next);
 
-			$stmt->close();
-		}
-		else
-		{
-			throw new Exception("Can't prepare statement: ".$db->error);
-		}
 		echo "Downgraded to v.$next\n";
 	}
 }
