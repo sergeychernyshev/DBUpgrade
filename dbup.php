@@ -167,18 +167,18 @@ function dbdown($db, $versions, $from = null, $to = null)
 	if (is_null($from))
 	{
 		$from = get_db_version($db);
-
-		if ($from <= $to)
-		{
-			echo "Nothing to downgrade from v.$from to v.$to.\n";
-			exit;
-		}
 	}
 
 	// if no version is passed, downgrade one version at a time
 	if (is_null($to))
 	{
 		$to = $from - 1;
+	}
+
+	if ($from <= $to)
+	{
+		echo "Nothing to downgrade from v.$from to v.$to.\n";
+		return false;
 	}
 
 	if ($to < 0)
