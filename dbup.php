@@ -97,6 +97,10 @@ function set_db_version($db, $version)
 
 function dbup($db, $versions, $from = null, $to = null)
 {
+	if (count($versions) == 0) {
+		throw new Exception('Don\'t know anything about data schema. Is your $versions array empty?');
+	}
+
 	// if no version is passed, upgrade to the latest version available
 	if (is_null($to))
 	{
@@ -163,6 +167,10 @@ function dbup($db, $versions, $from = null, $to = null)
 
 function dbdown($db, $versions, $from = null, $to = null)
 {
+	if (count($versions) == 0) {
+		throw new Exception('Don\'t know anything about data schema. Is your $versions array empty?');
+	}
+
 	// if current version is not passed over, try to get it from the db's db_version table
 	if (is_null($from))
 	{
