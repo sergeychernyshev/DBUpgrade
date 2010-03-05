@@ -1,4 +1,4 @@
-<?
+<?php
 /*
  * Database connection object
  * you need to set it up in config to MySQLi database

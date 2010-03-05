@@ -1,4 +1,4 @@
-<?
+<?php
 // must create MySQLi db object
 $db = new mysqli( 'localhost', 'user', 'pass', 'dbname');
 
