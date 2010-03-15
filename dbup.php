@@ -142,16 +142,7 @@ function dbup($db, $versions, $from = null, $to = null)
 
 		foreach ($commands as $sql)
 		{
-			if ($stmt = $db->prepare($sql))
-			{
-				if (!$stmt->execute())
-				{
-					throw new Exception("Can't execute statement [$sql]: ".$stmt->error);
-				}
-
-				$stmt->close();
-			}
-			else
+			if ($db->query($sql) === FALSE)
 			{
 				throw new Exception("Can't prepare statement: ".$db->error);
 			}
