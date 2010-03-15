@@ -144,7 +144,7 @@ function dbup($db, $versions, $from = null, $to = null)
 		{
 			if ($db->query($sql) === FALSE)
 			{
-				throw new Exception("Can't prepare statement: ".$db->error);
+				throw new Exception("Can't execute query: ".$db->error);
 			}
 		}
 
@@ -209,18 +209,9 @@ function dbdown($db, $versions, $from = null, $to = null)
 
 		foreach ($commands as $sql)
 		{
-			if ($stmt = $db->prepare($sql))
+			if ($db->query($sql) === FALSE)
 			{
-				if (!$stmt->execute())
-				{
-					throw new Exception("Can't execute statement [$sql]: ".$stmt->error);
-				}
-
-				$stmt->close();
-			}
-			else
-			{
-				throw new Exception("Can't prepare statement: ".$db->error);
+				throw new Exception("Can't execute query: ".$db->error);
 			}
 		}
 
