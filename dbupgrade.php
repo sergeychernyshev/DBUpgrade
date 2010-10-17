@@ -15,19 +15,27 @@ $versions = array();
  * VERSION 2
  * ... put some description of version 2 here ...
 */
-$versions[2] = array(
-	'up' => '',
-	'down' => '',
-);
+$versions[2]['up'][] = "";
+$versions[2]['down'][] = "";
+
+$versions[2]['up'][] = "";
+$versions[2]['down'][] = "";
+
+$versions[2]['up'][] = "";
+$versions[2]['down'][] = "";
 
 /* -------------------------------------------------------------------------------------------------------
  * VERSION 1
  * ... put some description of version 1 here ...
 */
-$versions[1] = array(
-	'up' => '',
-	'down' => '',
-);
+$versions[1]['up'][] = "";
+$versions[1]['down'][] = "";
+
+$versions[1]['up'][] = "";
+$versions[1]['down'][] = "";
+
+$versions[1]['up'][] = "";
+$versions[1]['down'][] = "";
 
 // creating DBUpgrade object with your database credentials and $versions defined above
 $dbupgrade = new DBUpgrade(
