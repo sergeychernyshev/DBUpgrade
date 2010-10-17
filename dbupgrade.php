@@ -1,7 +1,7 @@
 <?php
 /*
  * Copy this script to the folder above and populate $versions array with your migrations
- * For more info see: http://www.dbupgrade.org/Main_Page#Migrations_($versions_array)
+ * For more info see: http://www.dbupgrade.org/Main_Page#Migrations
  *
  * Note: this script should be versioned in your code repository so it always reflects current code's
  *       requirements for the database structure.
