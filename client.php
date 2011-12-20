@@ -14,4 +14,5 @@ try {
 	}
 } catch (Exception $e) {
 	echo '[ERR] Caught exception: ',  $e->getMessage(), "\n";
+	exit(1);
 }
