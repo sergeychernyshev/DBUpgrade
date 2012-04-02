@@ -7,6 +7,12 @@
 header('Content-type: text/plain');
 
 try {
+	if (!empty($argc) && count($argv) == 3 && $argv[1] == 'set' && is_numeric($argv[2])) {
+		echo 'Forcing DB version to v.'.intval($argv[2])."\n";
+		$dbupgrade->set_db_version(intval($argv[2]));
+		exit;
+	}
+
 	if (!empty($argc) && count($argv) == 2 && $argv[1] == 'down') {
 		$dbupgrade->dbdown();
 	} else {
