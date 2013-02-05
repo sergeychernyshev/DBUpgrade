@@ -41,7 +41,10 @@ $versions[1]['down'][] = "";
 $dbupgrade = new DBUpgrade(
 	new mysqli( 'localhost', '...user...', '...pass...', '...dbname...'), // must create MySQLi db object
 	$versions,
-	'myapp' // optional namespace if your database has tables from multiple projects that use DBUpgrade
+	array(
+		// optional prefix, useful if your database has tables from multiple projects that use DBUpgrade
+		'prefix' => 'my_'
+	)
 );
 
 require_once(dirname(__FILE__).'/dbupgrade/client.php');

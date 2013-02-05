@@ -1,34 +1,104 @@
 <?php
-/*
- * Database connection object
- * you need to set it up in config to MySQLi database
-*/
-#$db = new mysqli( 'localhost', 'user', 'pass', 'dbname');
-
-/*
- * Versions array holds upgrade and downgrade scripts for each version
- * keys of the array are version numbers
- * values are associative arrays with following keys
- *   'up'	- holds SQL to upgrade to this version from previous one
- *   'down'	- holds SQL to downgrade from this version to previous one
- *
- * Add entries for each version of your DB schema in config file
+/**
+ * DBUpgrade database schema migration tool
  */
-#$versions = array();
-
 class DBUpgrade {
+	/**
+	 * @var mysqli MySQLi database object
+	 */
 	private $db;
+
+	/**
+	 * @var string Table name for schema version metadata
+	 */
 	private $version_table;
+
+	/**
+	 * Versions array holds upgrade and downgrade scripts for each version
+	 * keys of the array are version numbers values are associative arrays
+	 * with following keys:
+	 *
+	 *   'up'	- holds SQL to upgrade to this version from previous one
+	 *   'down'	- holds SQL to downgrade from this version to previous one
+	 *
+	 * Add entries for each version of your DB schema in config file
+	 *
+	 * @var array[]
+	 */
 	private $versions;
 
-	public function __construct($db, $versions, $namespace = null) {
+	/**
+	 * Creates DBUpgrade object
+	 *
+	 * @param mysqli $db MySQLi database object
+	 * @param array[] $versions Array of schema migrations
+	 * @param array $options Options array (replaced deprecated namespace parameter)
+	 */
+	public function __construct($db, $versions, $options = array()) {
 		$this->db = $db;
 
-		if (is_null($namespace)) {
-			$this->version_table = 'db_version';
-		} else {
-			$this->version_table = md5($namespace).'_db_version';
+		if (!is_array($options)) {
+			// legacy support, treating options as namespace
+			$options = array('namespace' => $options);
 		}
+
+		if (array_key_exists('namespace', $options) && !array_key_exists('prefix', $options)) {
+			// legacy support, using bad table name
+			$this->version_table = md5($options['namespace']) . '_db_version';
+		} else if (array_key_exists('prefix', $options) && !array_key_exists('namespace', $options)) {
+			// new prefix mode
+			$this->version_table = $options['prefix'] . 'db_version';
+		} else if (array_key_exists('prefix', $options) && array_key_exists('namespace', $options)) {
+			// migrate from legacy namespace mode, then use prefix
+			$old_version_table = md5($options['namespace']) . '_db_version';
+			$new_version_table = $options['prefix'] . 'db_version';
+
+			$old_exists = false;
+			$new_exists = false;
+			if ($stmt = $this->db->prepare('SHOW TABLES'))
+			{
+				if (!$stmt->execute())
+				{
+					throw new Exception("Can't execute statement: ".$stmt->error);
+				}
+				if (!$stmt->bind_result($table_name))
+				{
+					throw new Exception("Can't bind result: ".$stmt->error);
+				}
+
+				while ($stmt->fetch())
+				{
+					if ($table_name == $old_version_table) {
+						$old_exists = true;
+					}
+
+					if ($table_name == $new_version_table) {
+						$new_exists = true;
+					}
+				}
+
+				$stmt->close();
+			}
+			else
+			{
+				throw new Exception("Can't prepare statement: ".$this->db->error);
+			}
+
+			if ($old_exists && !$new_exists) {
+				// Time to rename the table
+				if ($this->db->query('RENAME TABLE `' . $old_version_table . '` TO `' . $new_version_table . '`') === TRUE) {
+					$this->version_table = $new_version_table;
+				}
+			} else if (!$old_exists && $new_exists) {
+				// Table was already renamed
+				$this->version_table = $new_version_table;
+			} else if ($old_exists && $new_exists) {
+				throw new Exception("Both legacy table $old_version_table and new prefixed table $new_version_table exist, don't know what to do!");
+			}
+		} else {
+			$this->version_table = 'db_version';
+		}
+
 		$this->versions = $versions;
 	}
 
