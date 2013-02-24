@@ -89,7 +89,7 @@ class DBUpgrade {
 				if ($this->db->query('RENAME TABLE `' . $old_version_table . '` TO `' . $new_version_table . '`') === TRUE) {
 					$this->version_table = $new_version_table;
 				}
-			} else if (!$old_exists && $new_exists) {
+			} else if (!$old_exists) {
 				// Table was already renamed
 				$this->version_table = $new_version_table;
 			} else if ($old_exists && $new_exists) {
