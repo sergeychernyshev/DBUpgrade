@@ -105,7 +105,22 @@ class DBUpgrade {
 	public function get_db_version()
 	{
 		// if table doesn't exist at all, let's use version 0 for the shema (DEFAULT 0)
-		if ($stmt = $this->db->prepare('CREATE TABLE IF NOT EXISTS '.$this->version_table.' ( version INT(10) UNSIGNED DEFAULT 0 PRIMARY KEY)'))
+		if ($stmt = $this->db->prepare('CREATE TABLE IF NOT EXISTS '.$this->version_table.' ( version INT(10) UNSIGNED DEFAULT 0 PRIMARY KEY) ENGINE=InnoDB'))
+		{
+			if (!$stmt->execute())
+			{
+				throw new Exception("Can't execute statement: ".$stmt->error);
+			}
+
+			$stmt->close();
+		}
+		else
+		{
+			throw new Exception("Can't prepare statement: ".$this->db->error);
+		}
+
+		// Make sure we use InnoDB
+		if ($stmt = $this->db->prepare('ALTER TABLE '.$this->version_table.' ENGINE = INNODB'))
 		{
 			if (!$stmt->execute())
 			{
