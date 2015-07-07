@@ -4,4 +4,4 @@ DBUpgrade is a PHP library that allows for easy database schema upgrades and ver
 
 # License
 
-DBUprgade is licensed under MIT License (see LICENSE)
+DBUpgrade is licensed under MIT License (see LICENSE)
